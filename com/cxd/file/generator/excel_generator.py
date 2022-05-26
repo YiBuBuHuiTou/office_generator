@@ -1,23 +1,55 @@
 # -*- coding:UTF-8 -*-
 import openpyxl
+import sys
 import os
 import shutil
 
+message = None
 
-def copy_excel(src, dist):
-    files = os.listdir(src)
-    for file in files:
-        if os.path.isdir(file):
-            copy_excel(file,dist)
+def filesBackUp(src):
+    outputdir = os.path.join(src, "output")
+    message =  "判断目标地址是否已存在:"
+    if os.path.exists(outputdir):
+        message += "目标地址已存在\n进行删除。。。\n"
+        shutil.rmtree(outputdir)
+        message += "删除成功"
+    print(message)
+
+    message  = "开始将源文件或目录拷贝至目标文件夹。。。\n"
+    try:
+        shutil.copytree(src, outputdir)
+        message += "拷贝成功"
+    except Exception as err:
+        message  += repr(err)
+    finally:
+        print(message)
+
+    return outputdir
+
+
+if __name__ == '__main__':
+    files = r'E:\python\office_generator\test'
+    print("读取输入： " + files)
+    inputdir = None
+    outputdir = None
+    message = "判断输入内容： "
+    try:
+        if os.path.isfile(files):
+            message += "输入类型为文件类型"
+            inputdir = os.path.dirname(files)
+
+        elif os.path.isdir(files):
+            message += "输入类型为文件夹"
+
+            inputdir = files
         else:
-            shutil.c
+            message += "判断失败，请检查输入是否为文件或文件夹"
+            raise Exception("Error: 判断失败，请检查输入是否为文件或文件夹")
+    except Exception as err:
+        sys.exit(1)
+    finally:
+        print(message)
 
-    return
-
-
-if __name__ == '__name__':
-    copy_excel()
-
-
-
-
+        
+    outputdir = filesBackUp(inputdir)
+    print(outputdir)
