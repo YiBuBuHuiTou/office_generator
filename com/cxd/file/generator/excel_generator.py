@@ -6,7 +6,7 @@ import shutil
 from data_map import DataMap
 
 message = None
-PREFIX = "Float"
+PREFIX = "Floating"
 dd = {}
 
 
@@ -57,23 +57,42 @@ def excel_analyze(src):
         raise Exception("Error: " + src + "非文件类型")
     if os.path.splitext(src)[-1] != ".xls" and os.path.splitext(src)[-1] != ".xlsx":
         raise Exception("Error: " + src + "非excel类型")
+    floating_flag = False
     excel = openpyxl.load_workbook(src)
     for worksheet in excel.worksheets:
-        for row in worksheet.rows:
-            for cell in row:
+        for i, row in enumerate(worksheet.rows):
+            floating_flag = False
+            for j, cell in enumerate(row):
                 if cell is not None and cell.value is not None:
-                    if repr(cell.value).startswith(PREFIX):
-                        pass
+                    if cell.value.startswith(PREFIX) and floating_flag is False:
+                        cell_raw = cell.value.replace(PREFIX,"")
+                        cell.value = cell_replace(cell_raw)
+                        print("=================",cell,cell.value)
+                        for key, values in dd.items():
+                            for k, value in enumerate(values):
+                                if k == 0: continue
+                                worksheet.insert_rows(i+k+1,1)
+                                for col in range(worksheet.max_column-1):
+                                  worksheet.cell(i+k+1, col+1).value = cell_replace(cell_raw, key, k)
+                                #next(enumerate(worksheet.rows))
+                            floating_flag = True
                     else:
                         cell.value = cell_replace(cell.value)
     excel.save(src)
     excel.close()
 
-def cell_replace(src):
+def cell_copy(src, dst):
+    pass
+
+
+
+def cell_replace(src,key_v =0, index = 0):
     target = src
     for key, value in dd.items():
-        target = target.replace(key, value)
-    print(target)
+        if key == key_v:
+            target = target.replace(key, value[index])
+        else:
+            target = target.replace(key, value[0])
     return target
 
 
@@ -97,7 +116,10 @@ if __name__ == '__main__':
     files = r'F:\python\office_generator\test'
     config_file = r'F:\python\office_generator\新建文本文档.txt'
     message = "开始解析配置。。。"
-    dd = DataMap(DataMap.TXT, config_file, {}).convert2dict()
+    dataMap = DataMap(DataMap.TXT, config_file, {})
+    PREFIX = dataMap.prefix
+    dd = dataMap.convert2dict()
+    print(dd)
     message += "解析成功"
     print(message)
 
